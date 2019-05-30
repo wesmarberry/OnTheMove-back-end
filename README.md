@@ -3,8 +3,8 @@
 ### MVP
 
 User {
-	username
-	password
+	username  
+	password  
 	location {
 		lat:
 		lng:
