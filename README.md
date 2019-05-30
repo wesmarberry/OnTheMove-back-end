@@ -8,66 +8,66 @@ User {
 	location {
 		lat:
 		lng:
-}	
-	podcasts []
-	days []
-	entertainment_activities []
-	articles []
-}
+}  	
+	podcasts []  
+	days []  
+	entertainment_activities []  
+	articles []  
+}  
 
-podcast {
-	image
-	audio
-	search_param
-	api_id
-	user_id
-	reviews []
-}
+podcast {  
+	image  
+	audio  
+	search_param  
+	api_id  
+	user_id  
+	reviews []  
+}  
 
-days {
-	tasks []
-	date
-	user_id
-	past
-}
+days {  
+	tasks []  
+	date  
+	user_id  
+	past  
+}  
 
-task {
-	title
-	description
-	priority
-	completed
-	user_id
-}
+task {  
+	title  
+	description  
+	priority  
+	completed  
+	user_id  
+}  
 
-review {
-	desription
-	rating
-	user_id
-}
+review {  
+	desription  
+	rating  
+	user_id  
+}  
 
 ### Nice To Have
 
-entertainment_activity {
-	location {
-		lat:
-		lng:
-}
-	title
-	adress
-	date
-	search_param
-	user_id
-}
+entertainment_activity {  
+	location {  
+		lat:  
+		lng:  
+}  
+	title  
+	adress  
+	date  
+	search_param  
+	user_id  
+}  
 
 ### Stretch
 
-article {
-	title
-	body
-	photo
-	search_param
-	review []
-}
+article {  
+	title  
+	body  
+	photo  
+	search_param  
+	review []  
+}  
 
 ## Routes
 
