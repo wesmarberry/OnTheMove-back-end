@@ -24,13 +24,6 @@ podcast {
 	reviews []  
 }  
 
-days {  
-	tasks []  
-	date  
-	user_id  
-	past  
-}  
-
 task {  
 	title  
 	description  
