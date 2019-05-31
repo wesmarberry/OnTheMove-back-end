@@ -29,8 +29,9 @@ const taskController  = require('./controllers/taskController');
 const entertainmentController  = require('./controllers/entertainmentController');
 
 
-app.use('/api/v1/activity', activityController);
+app.use('/api/v1/task', taskController);
 app.use('/api/v1/user', userController);
+app.use('/api/v1/entertainment', entertainmentController);
 
 app.listen(process.env.PORT, () => {
   console.log('listening on port '  + process.env.PORT);
