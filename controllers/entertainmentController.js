@@ -120,7 +120,29 @@ router.post('/add', async (req, res) => {
 	}	
 })
 
+// deletes entertainment of user
+router.delete('/:id'), async (req, res) => {
+	try	{
+		const deletedEntertainment = await Entertainment.findyByIdAndDelete(req.params.id)
+		const foundUser = await User.findById(deletedEntertainment.userId)
+		const index = foundUser.entertainment.indexOf(deletedEntertainment._id)
+		foundUser.entertainment.splice(index, 1)
+		foundUser.save()
+		res.json({
+			status: 200,
+			data: deletedEntertainment
+			user: foundUser,
+			session: req.session
+		})	
 
+	} catch (err) {
+		res.json({
+			status: 400,
+			data: err
+		})
+	}
+
+}
 
 
 
