@@ -3,7 +3,9 @@ const router = express.Router();
 const User = require('../models/user');
 const Activity = require('../models/task');
 const Entertainment = require('../models/entertainment');
+const Podcast = require('../models/podcast');
 const bcrypt = require('bcryptjs');
+
 const superagent = require('superagent');
 var unirest = require('unirest');
 
@@ -65,6 +67,39 @@ router.get('/find', async (req, res) => {
 
 	}
 })
+
+router.post('/create', async (req, res) => {
+	try {
+		const idResponse = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + req.body.podcastId + '?sort=recent_first').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
+
+		const newIdResponse = idResponse.toJSON()
+		console.log(newIdResponse);
+		const podcastDbEntry = {}
+		podcastDbEntry.name = newIdResponse.body.title
+		podcastDbEntry.description = newIdResponse.body.description
+		podcastDbEntry.image = newIdResponse.body.image
+		podcastDbEntry.episodes = newIdResponse.body.episodes
+		podcastDbEntry.userId = req.body.userId
+		podcastDbEntry.apiId = newIdResponse.body.id
+		console.log('====================');
+		console.log(podcastDbEntry);
+		const createdPodcast = await Podcast.create(podcastDbEntry)
+		console.log(createdPodcast);
+		console.log('created a podcast');
+		const foundUser = await User.findById(createdPodcast.userId)
+		foundUser.podcasts.push(createdPodcast)
+		foundUser.save()
+		res.json({
+			status: 200,
+			data: createdPodcast,
+			user: foundUser,
+			session: req.session
+		})	
+
+	} catch (err) {
+
+	}
+})	
 
 
 

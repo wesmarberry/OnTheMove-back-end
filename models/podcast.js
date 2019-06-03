@@ -4,8 +4,8 @@ const Review = require('./review');
 const PodcastSchema = new mongoose.Schema({
 	name: {type: String, required: true},
 	description: {type: String, required: true},
-	audio: String,
 	image: String,
+	episodes: Array,
 	reviews:[{
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'Review'
@@ -16,4 +16,4 @@ const PodcastSchema = new mongoose.Schema({
 
 
 
-module.exports = mongoose.model('Entertainment', EntertainmentSchema);
+module.exports = mongoose.model('Podcast', PodcastSchema);

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Task = require('./task');
 const Entertainment = require('./entertainment')
+const Podcast = require('./podcast')
 
 const UserSchema = new mongoose.Schema({
 	email: {type: String, required: true},
@@ -15,6 +16,10 @@ const UserSchema = new mongoose.Schema({
 	entertainment:[{
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'Entertainment'
+	}],
+	podcasts:[{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Podcast'
 	}],
 	searches: Array,
 	friends: Array,
