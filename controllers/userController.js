@@ -150,11 +150,9 @@ router.get('/', async (req, res, next) => {
 
 	try {
 		const foundUsers = await User.find({})
-		const foundActivities = await Activity.find({})
 		res.json({
 			status: 200,
 			data: foundUsers,
-			activities: foundActivities,
 			session: req.session
 		})
 
@@ -173,7 +171,7 @@ router.get('/', async (req, res, next) => {
 // shows the user that is logged in and finds all of their activities with reviews populated
 router.get('/:id', async (req, res, next) => {
 	try {
-		const foundUser = await User.findById(req.params.id).populate('activities')
+		const foundUser = await User.findById(req.params.id).populate('tasks').populate('entertainment')
 		const foundActivities = await Activity.find({userId: req.params.id}).populate('reviews')
 		res.json({
 			status: 200,
@@ -216,22 +214,7 @@ router.put('/:id/edit', async(req, res, next) => {
 })
 
 
-// get session route
-// finds the user that is logged into the session
-router.get('/getInfo', async (req, res, next) => {
-	try {
-		const foundUser = await User.findById(req.session.userDbId)
-		res.json({
-			status: 200,
-			data: foundUser
-		})
-	} catch (err) {
-		res.json({
-			status: 400,
-			err: 'hit error'
-		})
-	}
-})
+
 
 
 // delete
