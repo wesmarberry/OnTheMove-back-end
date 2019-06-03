@@ -101,6 +101,40 @@ router.post('/create', async (req, res) => {
 	}
 })	
 
+// finds recommended podcasts 
+router.get('/recommended', async (req, res) => {
+	try {
+		const foundUser = await User.findById(req.body.userId).populate('podcasts')
+		if (foundUser.podcasts.length !== 0) {
+			const randNum = Math.floor(Math.random() * foundUser.podcasts.length)
+			const id = foundUser.podcasts[randNum].apiId
+			const response = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + id + '/recommendations?safe_mode=1').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
+			const newResponse = response.toJSON()
+			res.json({
+				status: 200,
+				data: newResponse,
+				user: foundUser,
+				session: req.session
+			})
+			
+		} else if (foundUser.searches.length !== 0) {
+			const randNum = Math.floor(Math.random() * foundUser.searches.length)
+			const search = foundUser.searches[randNum]
+			const formattedSearch = generateKeyword(search)
+			const response = await unirest.get('https://listen-api.listennotes.com/api/v2/search?q=' + formattedSearch + '&sort_by_date=0&type=podcast&offset=0&len_min=10&len_max=30&&only_in=title%2Cdescription&language=English&safe_mode=1').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
+			const newResponse = response.toJSON()
+			res.json({
+				status: 200,
+				data: newResponse,
+				user: foundUser,
+				session: req.session
+			})
+		}
+	} catch (err) {
+
+	}	
+})
+
 
 
 

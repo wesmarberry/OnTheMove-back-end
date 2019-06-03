@@ -28,11 +28,13 @@ const userController  = require('./controllers/userController');
 const taskController  = require('./controllers/taskController');
 const entertainmentController  = require('./controllers/entertainmentController');
 const podcastController  = require('./controllers/podcastController');
+const newsController  = require('./controllers/newsController');
 
 app.use('/api/v1/task', taskController);
 app.use('/api/v1/user', userController);
 app.use('/api/v1/entertainment', entertainmentController);
 app.use('/api/v1/podcast', podcastController);
+app.use('/api/v1/news', newsController);
 
 app.listen(process.env.PORT, () => {
   console.log('listening on port '  + process.env.PORT);
