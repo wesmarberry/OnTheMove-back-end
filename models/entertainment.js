@@ -4,7 +4,7 @@ const Entertainment = require('./entertainment');
 const EntertainmentSchema = new mongoose.Schema({
 	name: {type: String, required: true},
 	description: {type: String, required: true},
-	completed: Boolean,
+	completed: {type: Boolean, default: false,
 	time: String,
 	userId: String
 });
