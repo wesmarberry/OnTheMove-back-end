@@ -22,10 +22,10 @@ router.get('/popular', async (req, res) => {
 		podcastIds.push(newResponse.body.podcasts[randNum])
 		console.log('==========================');
 		console.log(newResponse.body.podcasts[randNum]);
-		const idResponse = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + newResponse.body.podcasts[randNum].id + '?sort=recent_first').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
-		const newIdResponse = idResponse.toJSON();
-		console.log(newIdResponse);
-		podcastIds[i].searched = newIdResponse
+		// const idResponse = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + newResponse.body.podcasts[randNum].id + '?sort=recent_first').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
+		// const newIdResponse = idResponse.toJSON();
+		// console.log(newIdResponse);
+		// podcastIds[i].searched = newIdResponse
 	}
 	res.json({
 		status: 200,
@@ -39,6 +39,31 @@ router.get('/popular', async (req, res) => {
 			data: err
 		})
 	}	
+})
+
+
+const generateKeyword = (string) => {
+	const NewString = string.replace(/ /g,'%20')
+	return NewString
+}
+
+// searches for podcasts
+router.get('/find', async (req, res) => {
+	try {
+		const foundUser = await User.findById(req.body.userId)
+		foundUser.searches.push(req.body.search)
+		foundUser.save()
+		const formattedSearch = generateKeyword(req.body.search)
+		const response = await unirest.get('https://listen-api.listennotes.com/api/v2/search?q=' + formattedSearch + '&sort_by_date=0&type=podcast&offset=0&len_min=10&len_max=30&&only_in=title%2Cdescription&language=English&safe_mode=1').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
+		const newResponse = response.toJSON()
+		res.json({
+			status: 200,
+			data: newResponse,
+			session: req.session
+		})	
+	} catch (err) {
+
+	}
 })
 
 
