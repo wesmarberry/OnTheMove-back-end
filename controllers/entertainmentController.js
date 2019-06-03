@@ -130,7 +130,7 @@ router.delete('/:id'), async (req, res) => {
 		foundUser.save()
 		res.json({
 			status: 200,
-			data: deletedEntertainment
+			data: deletedEntertainment,
 			user: foundUser,
 			session: req.session
 		})	

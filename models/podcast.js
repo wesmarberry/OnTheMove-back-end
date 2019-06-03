@@ -1,19 +1,17 @@
 const mongoose = require('mongoose');
-const Entertainment = require('./entertainment');
 const Review = require('./review');
 
-const EntertainmentSchema = new mongoose.Schema({
+const PodcastSchema = new mongoose.Schema({
 	name: {type: String, required: true},
 	description: {type: String, required: true},
-	completed: {type: Boolean, default: false},
-	lat: Number,
-	lng: Number,
+	audio: String,
+	image: String,
 	reviews:[{
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'Review'
 	}],
-	time: String,
-	userId: String
+	userId: String,
+	apiId: String
 });
 
 
