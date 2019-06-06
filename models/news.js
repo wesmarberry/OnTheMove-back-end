@@ -9,6 +9,7 @@ const NewsSchema = new mongoose.Schema({
 	publishedDate: String,
 	image: String,
 	userId: String,
+	url: String
 });
 
 

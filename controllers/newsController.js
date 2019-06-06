@@ -84,6 +84,20 @@ router.get('/:search/:id/search', async (req, res) => {
 	}	
 })
 
+router.get('/:id', async (req, res) => {
+	try {
+		console.log('hit show');
+		const foundNews = await News.findById(req.params.id)
+		console.log(foundNews);
+		res.json({
+			status: 200,
+			data: foundNews,
+			session: req.session
+		})
+	} catch (err) {
+
+	}		
+})
 
 // creates news posts to view
 router.post('/add', async (req, res) => {
