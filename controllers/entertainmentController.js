@@ -23,8 +23,7 @@ const generateKeyword = (string) => {
 req.body needs:
 userId
 search
-lat
-lng
+
 
 http://localhost:3679/api/v1/entertainment/find
 */
@@ -34,13 +33,13 @@ router.post('/find', async (req, res) => {
 		foundUser.searches.push(req.body.search)
 		foundUser.save()
 		const input = generateKeyword(req.body.search)
-		const apiCall = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query=' + input + '&location=' + req.body.lat + ',' + req.body.lng + '&radius=4828.03&key=' + process.env.GOOGLE_API_KEY
+		const apiCall = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query=' + input + '&location=' + foundUser.lat + ',' + foundUser.lng + '&radius=4828.03&key=' + process.env.GOOGLE_API_KEY
 		console.log(apiCall);
 		const apiRes = await superagent.post(apiCall)
 		console.log(apiRes);
 		res.json({
 	      status: 200,
-	      data: apiRes,
+	      data: apiRes.body.results,
 	      user: foundUser,
 	      session: req.session
 	    });
@@ -56,24 +55,40 @@ router.post('/find', async (req, res) => {
 router.post('/related', async (req, res) => {
 	try	{
 		console.log('starting related');
+		console.log(req.body);
 		const foundUser = await User.findById(req.body.userId)
 		console.log('found user');
 		console.log(foundUser);
-		const randNum = Math.floor(Math.random() * foundUser.searches.length)
-		console.log(randNum);
-		const related = []
-		for (let i = 0; i < 3; i++) {
-			const randNum = Math.floor(Math.random() * foundUser.searches.length)
-			const search = foundUser.searches[randNum]
-			const formattedSearch = generateKeyword(search)
+		let related = []
+		if (foundUser.searches.length !== 0) {
+			for (let i = 0; i < 5; i++) {
+
+				let search = null
+				while (search === null) {
+					const randNum = Math.floor(Math.random() * foundUser.searches.length)
+
+					search = foundUser.searches[randNum]
+					
+				}
+				const formattedSearch = generateKeyword(search)
+				
+				const apiCall = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query=' + formattedSearch + '&location=' + foundUser.lat + ',' + foundUser.lng + '&radius=4828.03&key=' + process.env.GOOGLE_API_KEY
+				console.log(apiCall);
+				const apiRes = await superagent.post(apiCall)
+				console.log(apiRes.body.results);
+				const randNum2 = Math.floor(Math.random() * apiRes.body.results.length)
+				related.push(apiRes.body.results[randNum2])
+
+			}
 			
-			const apiCall = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query=' + formattedSearch + '&location=' + req.body.lat + ',' + req.body.lng + '&radius=4828.03&key=' + process.env.GOOGLE_API_KEY
+		} else {
+			console.log('hit else');
+			const apiCall = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + foundUser.lat + ',' + foundUser.lng + '&radius=4828.03&type=restaurant&key=' + process.env.GOOGLE_API_KEY
 			console.log(apiCall);
 			const apiRes = await superagent.post(apiCall)
-			console.log(apiRes.body.results);
-			const randNum2 = Math.floor(Math.random() * apiRes.body.results.length)
-			related.push(apiRes.body.results[randNum2])
-
+			related = apiRes.body.results
+			console.log(related);
+			console.log('this is related');
 		}
 
 		// console.log(search);
@@ -84,7 +99,6 @@ router.post('/related', async (req, res) => {
 		// console.log(wordApiRes);
 		// const randNum2 = Matn.floor(Math.random() * wordApiCall.length)
 		// const newSearch = generateKeyword(wordApiCall[randNum2].word)
-		console.log(related);
 		res.json({
 	      status: 200,
 	      data: related,
@@ -102,7 +116,16 @@ router.post('/related', async (req, res) => {
 // creates activity for the user
 router.post('/add', async (req, res) => {
 	try {
-		const foundUser = await User.findById(req.body.userId)
+		console.log('hitting add');
+		console.log(req.body);
+		const foundUser = await User.findById(req.body.userId).populate('entertainment')
+		// const entDbEntry = {}
+		// entDbEntry.name = req.body.name.value
+		// entDbEntry.lat = req.body.lat.value
+		// entDbEntry.lng = req.body.lng.value
+		// entDbEntry.date = req.body.date.value
+		// entDbEntry.userId = req.body.userId.value
+		// entDbEntry.apiId = req.body.apiId.value
 		const createdEntertainment = await Entertainment.create(req.body)
 		foundUser.entertainment.push(createdEntertainment)
 		foundUser.save()
@@ -120,17 +143,46 @@ router.post('/add', async (req, res) => {
 	}	
 })
 
+// creates custom entertainment
+router.post('/custom', async (req, res) => {
+	try {
+		console.log('started Custom');
+		console.log(req.body);
+		const foundUser = await User.findById(req.body.userId)
+		const entDbEntry = {}
+		entDbEntry.name = req.body.customEnt
+		entDbEntry.userId = req.body.userId
+		entDbEntry.date = req.body.date
+		const createdEntertainment = await Entertainment.create(entDbEntry)
+		foundUser.entertainment.push(createdEntertainment)
+		foundUser.searches.push(req.body.customEnt)
+		foundUser.save()
+		res.json({
+	      status: 200,
+	      data: createdEntertainment,
+	      user: foundUser,
+	      session: req.session
+	    });
+	} catch (err) {
+
+	}	
+})
+
 // deletes entertainment of user
-router.delete('/:id'), async (req, res) => {
+router.delete('/:id', async (req, res) => {
 	try	{
-		const deletedEntertainment = await Entertainment.findyByIdAndDelete(req.params.id)
-		const foundUser = await User.findById(deletedEntertainment.userId)
-		const index = foundUser.entertainment.indexOf(deletedEntertainment._id)
+		const foundEntertainment = await Entertainment.findById(req.params.id)
+		console.log(foundEntertainment);
+		const deletedEntertainment = await Entertainment.findByIdAndDelete(req.params.id)
+		console.log(deletedEntertainment);
+		const foundUser = await User.findById(foundEntertainment.userId)
+		console.log(foundUser);
+		const index = foundUser.entertainment.indexOf(foundEntertainment._id)
 		foundUser.entertainment.splice(index, 1)
 		foundUser.save()
 		res.json({
 			status: 200,
-			data: deletedEntertainment,
+			data: foundEntertainment,
 			user: foundUser,
 			session: req.session
 		})	
@@ -142,7 +194,7 @@ router.delete('/:id'), async (req, res) => {
 		})
 	}
 
-}
+})
 
 
 

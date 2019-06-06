@@ -50,12 +50,14 @@ const generateKeyword = (string) => {
 }
 
 // searches for podcasts
-router.get('/find', async (req, res) => {
+router.get('/find/:search/:userid', async (req, res) => {
 	try {
-		const foundUser = await User.findById(req.body.userId)
-		foundUser.searches.push(req.body.search)
+		console.log('starting searching');
+		console.log(req.body);
+		const foundUser = await User.findById(req.params.userid)
+		foundUser.searches.push(req.params.search)
 		foundUser.save()
-		const formattedSearch = generateKeyword(req.body.search)
+		const formattedSearch = generateKeyword(req.params.search)
 		const response = await unirest.get('https://listen-api.listennotes.com/api/v2/search?q=' + formattedSearch + '&sort_by_date=0&type=podcast&offset=0&len_min=10&len_max=30&&only_in=title%2Cdescription&language=English&safe_mode=1').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
 		const newResponse = response.toJSON()
 		res.json({
@@ -68,9 +70,11 @@ router.get('/find', async (req, res) => {
 	}
 })
 
-router.post('/create', async (req, res) => {
+router.get('/:id/:userid/create', async (req, res) => {
 	try {
-		const idResponse = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + req.body.podcastId + '?sort=recent_first').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
+		console.log('starting podcast create');
+		console.log(req.params);
+		const idResponse = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + req.params.id + '?sort=recent_first').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
 
 		const newIdResponse = idResponse.toJSON()
 		console.log(newIdResponse);
@@ -79,7 +83,7 @@ router.post('/create', async (req, res) => {
 		podcastDbEntry.description = newIdResponse.body.description
 		podcastDbEntry.image = newIdResponse.body.image
 		podcastDbEntry.episodes = newIdResponse.body.episodes
-		podcastDbEntry.userId = req.body.userId
+		podcastDbEntry.userId = req.params.userid
 		podcastDbEntry.apiId = newIdResponse.body.id
 		console.log('====================');
 		console.log(podcastDbEntry);
@@ -102,10 +106,12 @@ router.post('/create', async (req, res) => {
 })	
 
 // finds recommended podcasts 
-router.get('/recommended', async (req, res) => {
+router.get('/recommended/:id', async (req, res) => {
 	try {
-		const foundUser = await User.findById(req.body.userId).populate('podcasts')
+		const foundUser = await User.findById(req.params.id).populate('podcasts')
+		console.log(foundUser);
 		if (foundUser.podcasts.length !== 0) {
+			console.log('ran recommendations');
 			const randNum = Math.floor(Math.random() * foundUser.podcasts.length)
 			const id = foundUser.podcasts[randNum].apiId
 			const response = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + id + '/recommendations?safe_mode=1').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
@@ -135,7 +141,34 @@ router.get('/recommended', async (req, res) => {
 	}	
 })
 
+router.get('/:id', async (req, res) => {
+	try {
+		console.log('started showpodcast');
+		console.log(req.params.id);
+		const foundPodcast = await Podcast.findById(req.params.id)
+		res.json({
+				status: 200,
+				data: foundPodcast,
+				session: req.session
+			})
 
+	} catch (err) {
+
+	}	
+})
+
+router.delete('/:id', async (req, res) => {
+	try {
+		const deletedPodcast = await Podcast.findByIdAndDelete(req.params.id)
+		res.json({
+				status: 200,
+				data: deletedPodcast,
+				session: req.session
+		})
+	} catch (err) {
+
+	}
+})
 
 
 
