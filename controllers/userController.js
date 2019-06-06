@@ -171,7 +171,7 @@ router.get('/', async (req, res, next) => {
 // shows the user that is logged in and finds all of their activities with reviews populated
 router.get('/:id', async (req, res, next) => {
 	try {
-		const foundUser = await User.findById(req.params.id).populate('tasks').populate('entertainment').populate('podcasts')
+		const foundUser = await User.findById(req.params.id).populate('tasks').populate('entertainment').populate('podcasts').populate('news')
 		res.json({
 			status: 200,
 			data: foundUser,
