@@ -28,7 +28,7 @@ const UserSchema = new mongoose.Schema({
 	}],
 	searches: Array,
 	friends: Array,
-
+	podcastIds: Array
 });
 
 

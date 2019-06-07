@@ -18,7 +18,7 @@ router.get('/popular', async (req, res) => {
 		newResponse = response.toJSON();
 		console.log(newResponse);
 	const podcastIds = []
-	for (let i = 0; i < 3; i++) {
+	for (let i = 0; i < 10; i++) {
 		const randNum = Math.floor(Math.random() * newResponse.body.podcasts.length)
 		console.log(newResponse.body.podcasts.length);
 		podcastIds.push(newResponse.body.podcasts[randNum])
@@ -92,7 +92,9 @@ router.get('/:id/:userid/create', async (req, res) => {
 		console.log('created a podcast');
 		const foundUser = await User.findById(createdPodcast.userId)
 		foundUser.podcasts.push(createdPodcast)
+		foundUser.podcastIds.push(createdPodcast.apiId)
 		foundUser.save()
+
 		res.json({
 			status: 200,
 			data: createdPodcast,
@@ -110,10 +112,10 @@ router.get('/recommended/:id', async (req, res) => {
 	try {
 		const foundUser = await User.findById(req.params.id).populate('podcasts')
 		console.log(foundUser);
-		if (foundUser.podcasts.length !== 0) {
+		if (foundUser.podcastIds.length !== 0) {
 			console.log('ran recommendations');
-			const randNum = Math.floor(Math.random() * foundUser.podcasts.length)
-			const id = foundUser.podcasts[randNum].apiId
+			const randNum = Math.floor(Math.random() * foundUser.podcastIds.length)
+			const id = foundUser.podcastIds[randNum]
 			const response = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + id + '/recommendations?safe_mode=1').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
 			const newResponse = response.toJSON()
 			res.json({

@@ -76,8 +76,14 @@ router.post('/related', async (req, res) => {
 				console.log(apiCall);
 				const apiRes = await superagent.post(apiCall)
 				console.log(apiRes.body.results);
-				const randNum2 = Math.floor(Math.random() * apiRes.body.results.length)
-				related.push(apiRes.body.results[randNum2])
+				if (apiRes.body.results.length > 0) {
+					const randNum2 = Math.floor(Math.random() * apiRes.body.results.length)
+					if (related.includes(apiRes.body.results[randNum2]) === false) {
+						related.push(apiRes.body.results[randNum2])
+						
+					}
+					
+				}
 
 			}
 			
