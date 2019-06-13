@@ -13,7 +13,7 @@ Deployed Front End: https://onthmove.herokuapp.com/
 
 ## Models: 
 
-User {
+User {  
 	email: {type: String, required: true},  
 	username: {type: String, required: true},  
 	password: {type: String, required: true},  
@@ -22,12 +22,12 @@ User {
 	tasks:[{  
 		type: mongoose.Schema.Types.ObjectId,  
 		ref: 'Task'  
-	}],
-	entertainment:[{
-		type: mongoose.Schema.Types.ObjectId,  
+	}],  
+	entertainment:[{  
+		type: mongoose.Schema.Types.ObjectId,    
 		ref: 'Entertainment'  
 	}],  
-	podcasts:[{  
+	podcasts:[{.  
 		type: mongoose.Schema.Types.ObjectId,  
 		ref: 'Podcast'  
 	}],  
@@ -50,7 +50,7 @@ podcast {
 		ref: 'Review'  
 	}],  
 	userId: String,  
-	apiId: String 
+	apiId: String  
 }  
 
 task {  
@@ -84,7 +84,7 @@ Entertainment {
 	}],  
 	date: String,  
 	userId: String,  
-	apiId: String. 
+	apiId: String  
 }  
 
 News {  
@@ -95,7 +95,7 @@ News {
 	publishedDate: String,  
 	image: String,  
 	userId: String,  
-	url: String. 
+	url: String  
 }  
 
 ## Endpoints
