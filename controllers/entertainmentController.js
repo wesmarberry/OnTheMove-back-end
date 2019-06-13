@@ -11,32 +11,34 @@ const superagent = require('superagent');
 
 
 
-// if the "other" category is filled out with spaces, it replaces the spaces with an underscore
-// this is necessary for the syntax of the API call
+// generates the necessary syntax for the api call
 const generateKeyword = (string) => {
 	const NewString = string.replace(/ /g,'+')
 	return NewString
 }
 
-// api call to get activities
+// api call to search for activities based on user search
 /*
 req.body needs:
 userId
 search
 
 
-http://localhost:3679/api/v1/entertainment/find
+/api/v1/entertainment/find
 */
 router.post('/find', async (req, res) => {
 	try	{
+		// finds the user in order to save the searches
 		const foundUser = await User.findById(req.body.userId)
+		// pushes the user's search into their searches
 		foundUser.searches.push(req.body.search)
 		foundUser.save()
+		// formats the search for the api call
 		const input = generateKeyword(req.body.search)
 		const apiCall = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query=' + input + '&location=' + foundUser.lat + ',' + foundUser.lng + '&radius=4828.03&key=' + process.env.GOOGLE_API_KEY
-		console.log(apiCall);
+		
 		const apiRes = await superagent.post(apiCall)
-		console.log(apiRes);
+		
 		res.json({
 	      status: 200,
 	      data: apiRes.body.results,
@@ -51,15 +53,16 @@ router.post('/find', async (req, res) => {
 	}
 })
 
-
+// finds related entertainment based on past user searches
+// endpoint: /api/v1/entertainment/related
+// req.body requirements: userId
 router.post('/related', async (req, res) => {
 	try	{
-		console.log('starting related');
-		console.log(req.body);
+		
 		const foundUser = await User.findById(req.body.userId)
-		console.log('found user');
-		console.log(foundUser);
+		
 		let related = []
+		// if the user has no searches then nearby restaurants are found
 		if (foundUser.searches.length !== 0) {
 			for (let i = 0; i < 5; i++) {
 
@@ -73,9 +76,9 @@ router.post('/related', async (req, res) => {
 				const formattedSearch = generateKeyword(search)
 				
 				const apiCall = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query=' + formattedSearch + '&location=' + foundUser.lat + ',' + foundUser.lng + '&radius=4828.03&key=' + process.env.GOOGLE_API_KEY
-				console.log(apiCall);
+				
 				const apiRes = await superagent.post(apiCall)
-				console.log(apiRes.body.results);
+				// if places are found then one is picked at random and pushed into the results array
 				if (apiRes.body.results.length > 0) {
 					const randNum2 = Math.floor(Math.random() * apiRes.body.results.length)
 					if (related.includes(apiRes.body.results[randNum2]) === false) {
@@ -88,23 +91,14 @@ router.post('/related', async (req, res) => {
 			}
 			
 		} else {
-			console.log('hit else');
+			
 			const apiCall = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + foundUser.lat + ',' + foundUser.lng + '&radius=4828.03&type=restaurant&key=' + process.env.GOOGLE_API_KEY
-			console.log(apiCall);
+			
 			const apiRes = await superagent.post(apiCall)
 			related = apiRes.body.results
-			console.log(related);
-			console.log('this is related');
+			
 		}
 
-		// console.log(search);
-		// console.log(formattedSearch);
-		// const wordApiCall = 'https://api.datamuse.com/words?ml=' + formattedSearch + '&max=20'
-		// console.log(wordApiCall);
-		// const wordApiRes = await superagent.post(wordApiCall)
-		// console.log(wordApiRes);
-		// const randNum2 = Matn.floor(Math.random() * wordApiCall.length)
-		// const newSearch = generateKeyword(wordApiCall[randNum2].word)
 		res.json({
 	      status: 200,
 	      data: related,
@@ -120,18 +114,13 @@ router.post('/related', async (req, res) => {
 })
 
 // creates activity for the user
+// endpoint: /api/v1/entertainment/add
+// req.body requirements: name, lat, lng, date, userId, apiId, formatted_address
 router.post('/add', async (req, res) => {
 	try {
-		console.log('hitting add');
-		console.log(req.body);
+		
 		const foundUser = await User.findById(req.body.userId).populate('entertainment')
-		// const entDbEntry = {}
-		// entDbEntry.name = req.body.name.value
-		// entDbEntry.lat = req.body.lat.value
-		// entDbEntry.lng = req.body.lng.value
-		// entDbEntry.date = req.body.date.value
-		// entDbEntry.userId = req.body.userId.value
-		// entDbEntry.apiId = req.body.apiId.value
+		
 		const createdEntertainment = await Entertainment.create(req.body)
 		foundUser.entertainment.push(createdEntertainment)
 		foundUser.save()
@@ -150,10 +139,11 @@ router.post('/add', async (req, res) => {
 })
 
 // creates custom entertainment
+// endpoint: /api/v1/entertainment/custom
+// req.body requirements: userId, customEnt (search), date
 router.post('/custom', async (req, res) => {
 	try {
-		console.log('started Custom');
-		console.log(req.body);
+		
 		const foundUser = await User.findById(req.body.userId)
 		const entDbEntry = {}
 		entDbEntry.name = req.body.customEnt
@@ -170,19 +160,23 @@ router.post('/custom', async (req, res) => {
 	      session: req.session
 	    });
 	} catch (err) {
-
+		res.json({
+	      status: 400,
+	      data: err
+	    });
 	}	
 })
 
 // deletes entertainment of user
+// endpoint: /api/v1/entertainment/{entertainment Id}
 router.delete('/:id', async (req, res) => {
 	try	{
 		const foundEntertainment = await Entertainment.findById(req.params.id)
-		console.log(foundEntertainment);
+		
 		const deletedEntertainment = await Entertainment.findByIdAndDelete(req.params.id)
-		console.log(deletedEntertainment);
+		
 		const foundUser = await User.findById(foundEntertainment.userId)
-		console.log(foundUser);
+		
 		const index = foundUser.entertainment.indexOf(foundEntertainment._id)
 		foundUser.entertainment.splice(index, 1)
 		foundUser.save()

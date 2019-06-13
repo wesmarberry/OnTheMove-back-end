@@ -12,6 +12,7 @@ var unirest = require('unirest');
 
 
 // finds top newx headlines
+// endpoint: /api/v1/news/top
 router.get('/top', async (req, res) => {
 	try {
 		const response = await superagent.get('https://newsapi.org/v2/top-headlines?country=us&apiKey=' + process.env.NEWS_API_KEY)
@@ -30,28 +31,33 @@ router.get('/top', async (req, res) => {
 	}		
 })
 
+
+// formats the searches to be accepted by the API call
 const generateKeyword = (string) => {
 	const NewString = string.replace(/ /g,'+')
 	return NewString
 }
 
-// finds recommended news headlines
+// finds 5 recommended news headlines
+// endpoint: /api/v1/news/{user Id}/recommended
 router.get('/:id/recommended', async (req, res) => {
 	try {
-		console.log('hitting recommended');
+		
 		const foundUser = await User.findById(req.params.id)
-		console.log(foundUser);
+		
 		const results = []
+
 		for (let i = 0; i < 5; i++) {
 			const randNum = Math.floor(Math.random() * foundUser.searches.length)
-			console.log(randNum);
+			
+			// finds a random search from the user
 			const search = foundUser.searches[randNum]
-			console.log(search);
+			
 			const formattedSearch = generateKeyword(search)
 			const response = await superagent.get('https://newsapi.org/v2/everything?q=' + formattedSearch + '&apiKey=' + process.env.NEWS_API_KEY)
-			console.log(response.body.articles);
+			
 			const randNum2 = Math.floor(Math.random() * response.body.articles.length)
-			console.log(response.body.articles.length);
+			
 			results.push(response.body.articles[randNum2])
 		}
 		res.json({
@@ -68,6 +74,9 @@ router.get('/:id/recommended', async (req, res) => {
 	}
 })
 
+
+// users can search for news articles based on keyword
+// endpoint: /api/v1/news/{search parameter}/{user Id}/search
 router.get('/:search/:id/search', async (req, res) => {
 	try {
 		formattedSearch = generateKeyword(req.params.search)
@@ -80,10 +89,15 @@ router.get('/:search/:id/search', async (req, res) => {
 			session: req.session
 		})
 	} catch (err) {
-
+		res.json({
+			status: 400,
+			data: err
+		})
 	}	
 })
 
+// Shows an individual news article
+// endpoint: /api/v1/news/{article Id}
 router.get('/:id', async (req, res) => {
 	try {
 		console.log('hit show');
@@ -95,11 +109,16 @@ router.get('/:id', async (req, res) => {
 			session: req.session
 		})
 	} catch (err) {
-
+		res.json({
+			status: 400,
+			data: err
+		})
 	}		
 })
 
-// creates news posts to view
+// creates news news articles
+// endpoint: /api/v1/news/add
+// req.body requirements: content, description, author, publishedDate, userId, image, title, url
 router.post('/add', async (req, res) => {
 	try	{
 		const createdNews = await News.create(req.body)
@@ -113,10 +132,16 @@ router.post('/add', async (req, res) => {
 			session: req.session
 		})
 	} catch (err) {
-
+		res.json({
+			status: 400,
+			data: err
+		})
 	}	
 })
 
+
+// deletes articles
+// endpoint: /api/v1/news/{article Id}
 router.delete('/:id', async (req, res) => {
 	try {
 		const deletedNews = await News.findByIdAndDelete(req.params.id)
@@ -126,7 +151,10 @@ router.delete('/:id', async (req, res) => {
 				session: req.session
 		})
 	} catch (err) {
-
+		res.json({
+			status: 400,
+			data: err
+		})
 	}
 })
 

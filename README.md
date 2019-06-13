@@ -1,100 +1,149 @@
+# OnThMove Back End
+
+Decoupled back end server for onThMove front end: https://github.com/wesmarberry/OnThMove
+
+Deployed Front End: https://onthmove.herokuapp.com/
+
+
+## Technologies
+* NodeJS
+* Express
+* MongoDB
+* Mongoose
+
 ## Models: 
 
-### MVP
-
 User {
-	username  
-	password  
-	location {
-		lat:
-		lng:
-}  	
-	podcasts []  
-	days []  
-	entertainment_activities []  
-	articles []  
+	email: {type: String, required: true},  
+	username: {type: String, required: true},  
+	password: {type: String, required: true},  
+	lat: Number,  
+	lng: Number,  
+	tasks:[{  
+		type: mongoose.Schema.Types.ObjectId,  
+		ref: 'Task'  
+	}],
+	entertainment:[{
+		type: mongoose.Schema.Types.ObjectId,  
+		ref: 'Entertainment'  
+	}],  
+	podcasts:[{  
+		type: mongoose.Schema.Types.ObjectId,  
+		ref: 'Podcast'  
+	}],  
+	news:[{  
+		type: mongoose.Schema.Types.ObjectId,  
+		ref: 'News'  
+	}],  
+	searches: Array,  
+	friends: Array,  
+	podcastIds: Array  
 }  
 
 podcast {  
-	image  
-	audio  
-	search_param  
-	api_id  
-	user_id  
-	reviews []  
+	name: {type: String, required: true},  
+	description: {type: String, required: true},  
+	image: String,  
+	episodes: Array,  
+	reviews:[{  
+		type: mongoose.Schema.Types.ObjectId,  
+		ref: 'Review'  
+	}],  
+	userId: String,  
+	apiId: String 
 }  
 
 task {  
-	title  
-	description  
-	priority  
-	completed  
-	user_id  
+	title: String,  
+	description: {type: String, required:   true},  
+	priority: String,  
+	completed: {type: String, default: 'false'},  
+	time: String,  
+	date: String,  
+	userId: String  
 }  
 
 review {  
-	desription  
-	rating  
-	user_id  
+	body: String,  
+	rating: String,  
+	username: String,  
+	userId: String,  
+	activityId: String,  
+	activityApiId: String  
 }  
 
-### Nice To Have
 
-entertainment_activity {  
-	location {  
-		lat:  
-		lng:  
-}  
-	title  
-	adress  
-	date  
-	search_param  
-	user_id  
-}  
-
-### Stretch
-
-article {  
-	title  
-	body  
-	photo  
-	search_param  
-	review []  
+Entertainment {  
+	name: {type: String, required: true},  
+	formatted_address: String,  
+	lat: Number,  
+	lng: Number,  
+	reviews:[{. 
+		type: mongoose.Schema.Types.ObjectId,  
+		ref: 'Review'. 
+	}],  
+	date: String,  
+	userId: String,  
+	apiId: String. 
 }  
 
-## Routes
+News {  
+	content: String,  
+	description: String,  
+	author: String,  
+	title: String,  
+	publishedDate: String,  
+	image: String,  
+	userId: String,  
+	url: String. 
+}  
+
+## Endpoints
 
 ### GET
-* /users/{id} gets all single user information
-* /users/logout destroys the session logs user out
-* /podcasts gets all of a single users podcasts
-* /podcasts/related makes API call to get podcasts realted to past user search params
-* /podcasts/popular makes API call to get popular podcasts
-* /podcasts/{id} shows single podcast
-* /activity makes API call to show activities based on parameter
-* /articles/related makes API call to show related articles
-* /articles makes API call to show articles based on search params
-* /articles/{id} shows single article for reading
-
+* /api/v1/user/logout - logs out users
+* /api/v1/user - finds all users
+* /api/v1/user/{user id} - shows a single user with the tasks, entertainment, podcasts, and news populated
+* /api/v1/podcast/popular - finds popular podcasts
+* /api/v1/podcast/find/{search parameter}/{user Id} - searches for podcasts
+* /api/v1/podcast/{podcast id}/{user id}/create - creates new podcast
+* /api/v1/podcast/recommended/{user id} - finds recommended podcasts for a user
+* /api/v1/{podcast id} - shows a single podcast
+* /api/v1/news/top - finds top news headlines
+* /api/v1/news/{user Id}/recommended - finds 5 recommended news headlines
+* /api/v1/news/{search parameter}/{user Id}/search - searches for news articles based on keyword
+* /api/v1/news/{news id} - shows a single news article
 
 ### POST
-* /users/register registers new users
-* /users/login logs in existing users
-* /podcasts creates new podcast and adds podcast to user podcast array
-* /review creates review and add it to that podcast or activity array
-* /currday creates new day with current date
-* /futureday creates new day with future date
-* /task creates new task and adds it to that day's array and saves user
-* /activity creates new activity
-* /article creates new article and adds the article to the users article array
+* /api/v1/user/register - registers new users
+** req.body requirements: lat, lng, email, username, password
+* /api/v1/user/new - logs in existing users
+** req.body requirements: username, password, lat, lng
+/api/v1/entertainment/find - searches for activities 
+** req.body requirements: userId, search
+* /api/v1/entertainment/related - finds related entertainment
+** req.body requirements: userId
+* /api/v1/entertainment/add - creates an activity
+** req.body requirements: name, lat, lng, date, userId, apiId, formatted_address
+* /api/v1/entertainment/custom - creates custom entertainment activity
+** req.body requirements: userId, customEnt (search), date
+* /api/v1/task - creates new task 
+** req.body reqirements: description, priority, time, userId, date
+* /api/v1/news/add - creates news
+** req.body requirements: content, description, author, publishedDate, userId, image, title, url
 
 ### PUT
-* /users edits user account information
-* /task updates existing task
+* /api/v1/user/{user id}/edit - updates a user's username and/or email from their home page
+* /api/v1/task/{task id}/edit - updates a task
+* /api/v1/task/updateall - updates all tasks that have not been marked as completed and were created before the current date
 
 ### DELETE
-* /users deletes user account but does not delete reviews
-* /activity deletes activity
+* /api/v1/user/{user id} - deletes a user
+* /api/v1/entertainment/{entertainment Id} - deletes entertainment activity
+* api/v1/task/{task id} - deletes a task
+* /api/v1/{podcast id} - deletes a podcast
+* api/v1/news/{article Id} - deletes news
+
 
 
 

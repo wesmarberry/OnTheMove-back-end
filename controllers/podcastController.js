@@ -11,24 +11,22 @@ var unirest = require('unirest');
 
 
 // finds popular podcasts
+// endpoint: /api/v1/podcast/popular
 router.get('/popular', async (req, res) => {
 	try {
 
 		const response = await unirest.get('https://listen-api.listennotes.com/api/v2/best_podcasts?page=1&region=us&safe_mode=1').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
 		newResponse = response.toJSON();
-		console.log(newResponse);
-	const podcastIds = []
-	for (let i = 0; i < 10; i++) {
-		const randNum = Math.floor(Math.random() * newResponse.body.podcasts.length)
-		console.log(newResponse.body.podcasts.length);
-		podcastIds.push(newResponse.body.podcasts[randNum])
-		console.log('==========================');
-		console.log(newResponse.body.podcasts[randNum]);
-		// const idResponse = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + newResponse.body.podcasts[randNum].id + '?sort=recent_first').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
-		// const newIdResponse = idResponse.toJSON();
-		// console.log(newIdResponse);
-		// podcastIds[i].searched = newIdResponse
-	}
+		
+		const podcastIds = []
+		// finds 10 popular podcasts and pushes them into the podcastIds array
+		for (let i = 0; i < 10; i++) {
+			const randNum = Math.floor(Math.random() * newResponse.body.podcasts.length)
+			
+			podcastIds.push(newResponse.body.podcasts[randNum])
+			
+			
+		}
 	res.json({
 		status: 200,
 		data: podcastIds,
@@ -43,17 +41,18 @@ router.get('/popular', async (req, res) => {
 	}	
 })
 
-
+// generates a formatted keyword to be used in the podcast search
 const generateKeyword = (string) => {
 	const NewString = string.replace(/ /g,'%20')
 	return NewString
 }
 
 // searches for podcasts
+// endpoint: /api/v1/podcast/find/{search parameter}/{user Id}
 router.get('/find/:search/:userid', async (req, res) => {
 	try {
-		console.log('starting searching');
-		console.log(req.body);
+		
+		// finds the user searching
 		const foundUser = await User.findById(req.params.userid)
 		foundUser.searches.push(req.params.search)
 		foundUser.save()
@@ -66,10 +65,15 @@ router.get('/find/:search/:userid', async (req, res) => {
 			session: req.session
 		})	
 	} catch (err) {
-
+		res.json({
+			status: 400,
+			data: err
+		})
 	}
 })
 
+// creates user podcasts
+// endpoint: /api/v1/podcast/{podcast id}/{user id}/create
 router.get('/:id/:userid/create', async (req, res) => {
 	try {
 		console.log('starting podcast create');
@@ -77,7 +81,9 @@ router.get('/:id/:userid/create', async (req, res) => {
 		const idResponse = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + req.params.id + '?sort=recent_first').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
 
 		const newIdResponse = idResponse.toJSON()
-		console.log(newIdResponse);
+		
+
+		// outlines the api response data needed to create the podcast
 		const podcastDbEntry = {}
 		podcastDbEntry.name = newIdResponse.body.title
 		podcastDbEntry.description = newIdResponse.body.description
@@ -85,11 +91,10 @@ router.get('/:id/:userid/create', async (req, res) => {
 		podcastDbEntry.episodes = newIdResponse.body.episodes
 		podcastDbEntry.userId = req.params.userid
 		podcastDbEntry.apiId = newIdResponse.body.id
-		console.log('====================');
-		console.log(podcastDbEntry);
+		
 		const createdPodcast = await Podcast.create(podcastDbEntry)
-		console.log(createdPodcast);
-		console.log('created a podcast');
+		
+		// adds the created podcast to the user
 		const foundUser = await User.findById(createdPodcast.userId)
 		foundUser.podcasts.push(createdPodcast)
 		foundUser.podcastIds.push(createdPodcast.apiId)
@@ -103,17 +108,21 @@ router.get('/:id/:userid/create', async (req, res) => {
 		})	
 
 	} catch (err) {
-
+		res.json({
+			status: 400,
+			data: err
+		})
 	}
 })	
 
 // finds recommended podcasts 
+// endpoint: /api/v1/podcast/recommended/{user id}
 router.get('/recommended/:id', async (req, res) => {
 	try {
 		const foundUser = await User.findById(req.params.id).populate('podcasts')
-		console.log(foundUser);
+		// if the user has added a podcast then the API is called to recommend podcasts
 		if (foundUser.podcastIds.length !== 0) {
-			console.log('ran recommendations');
+			// finds a random user podcast ID to generate recommendations from 
 			const randNum = Math.floor(Math.random() * foundUser.podcastIds.length)
 			const id = foundUser.podcastIds[randNum]
 			const response = await unirest.get('https://listen-api.listennotes.com/api/v2/podcasts/' + id + '/recommendations?safe_mode=1').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
@@ -125,8 +134,9 @@ router.get('/recommended/:id', async (req, res) => {
 				session: req.session
 			})
 			
-		} else if (foundUser.searches.length !== 0) {
+		} else if (foundUser.searches.length !== 0) { // if the user has never added a podcast then it generates recommendation based on the user's searches
 			const randNum = Math.floor(Math.random() * foundUser.searches.length)
+			// gets a random user search from the user
 			const search = foundUser.searches[randNum]
 			const formattedSearch = generateKeyword(search)
 			const response = await unirest.get('https://listen-api.listennotes.com/api/v2/search?q=' + formattedSearch + '&sort_by_date=0&type=podcast&offset=0&len_min=10&len_max=30&&only_in=title%2Cdescription&language=English&safe_mode=1').header('X-ListenAPI-Key', process.env.PODCAST_API_KEY)
@@ -139,14 +149,18 @@ router.get('/recommended/:id', async (req, res) => {
 			})
 		}
 	} catch (err) {
-
+		res.json({
+			status: 400,
+			data: err
+		})
 	}	
 })
 
+// shows a podcast
+// endpoint: /api/v1/{podcast id}
 router.get('/:id', async (req, res) => {
 	try {
-		console.log('started showpodcast');
-		console.log(req.params.id);
+		
 		const foundPodcast = await Podcast.findById(req.params.id)
 		res.json({
 				status: 200,
@@ -155,10 +169,15 @@ router.get('/:id', async (req, res) => {
 			})
 
 	} catch (err) {
-
+		res.json({
+			status: 400,
+			data: err
+		})
 	}	
 })
 
+// deletes a podcast
+// endpoint: /api/v1/{podcast id}
 router.delete('/:id', async (req, res) => {
 	try {
 		const deletedPodcast = await Podcast.findByIdAndDelete(req.params.id)
@@ -168,7 +187,10 @@ router.delete('/:id', async (req, res) => {
 				session: req.session
 		})
 	} catch (err) {
-
+		res.json({
+			status: 400,
+			data: err
+		})
 	}
 })
 

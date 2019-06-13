@@ -5,7 +5,9 @@ const Activity = require('../models/task');
 const bcrypt = require('bcryptjs');
 
 
-// route to register a new user
+// route to register a new user (creates a new user)
+// endpoint: /api/v1/user/register
+// req.body requirements: lat, lng, email, username, password
 router.post('/register', async (req, res, next) => {
 
 	// first we must hash the password
@@ -64,6 +66,8 @@ router.post('/register', async (req, res, next) => {
 
 
 // logs in existing users
+// endpoint: /api/v1/user/new
+// req.body requirements: username, password, lat, lng
 router.post('/new', async (req, res, next) => {
 
   try {
@@ -76,13 +80,12 @@ router.post('/new', async (req, res, next) => {
       if (bcrypt.compareSync(req.body.password, userExists.password)) {
       	// if the password is correct set the session properties
 
-      	console.log(userExists._id);
+      	
       	// resets the users lat and lng based on client retreived data
       	userExists.lat = req.body.lat
       	userExists.lng =req.body.lng
       	userExists.save()
-      	console.log(userExists);
-      	console.log('got past setting lat lng');
+      	
         req.session.userDbId = userExists._id
         req.session.logged = true
         req.session.username = req.body.username
@@ -122,8 +125,8 @@ router.post('/new', async (req, res, next) => {
 
 })  
 
-// logout
-
+// logout route, destroys session
+// endpoint: /api/v1/user/logout
 router.get('/logout', (req, res, next) => {
 	try {
 		req.session.destroy()
@@ -145,6 +148,7 @@ router.get('/logout', (req, res, next) => {
 
 // index route
 // finds all the users and all the activities
+// endpoint: /api/v1/user
 router.get('/', async (req, res, next) => {
 
 
@@ -168,7 +172,8 @@ router.get('/', async (req, res, next) => {
 })
 
 //show route
-// shows the user that is logged in and finds all of their activities with reviews populated
+// shows a single user with the tasks, entertainment, podcasts, and news populated
+// endpoint: /api/v1/user/{user id}
 router.get('/:id', async (req, res, next) => {
 	try {
 		const foundUser = await User.findById(req.params.id).populate('tasks').populate('entertainment').populate('podcasts').populate('news')
@@ -191,6 +196,7 @@ router.get('/:id', async (req, res, next) => {
 
 // update
 // updates a user's username and/or email from their home page
+// endpoint: /api/v1/user/{user id}/edit
 router.put('/:id/edit', async(req, res, next) => {
 	try {
 		const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {new: true})
@@ -217,6 +223,7 @@ router.put('/:id/edit', async(req, res, next) => {
 
 // delete
 // deletes a user
+// endpoint: /api/v1/user/{user id}
 router.delete('/:id', async (req, res, next) => {
 	try {
 		const deletedUser = await User.findByIdAndRemove(req.params.id)
