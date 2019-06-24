@@ -3,6 +3,9 @@ const router = express.Router();
 const User = require('../models/user');
 const Activity = require('../models/task');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer')
+
+
 
 
 // route to register a new user (creates a new user)
@@ -62,6 +65,82 @@ router.post('/register', async (req, res, next) => {
 	    	data: 'Please fill out all required fields'
 	    })
 	}
+})
+
+
+const mailer = async (receiverEmail, password) => {
+
+    try {
+		// sets up transporter based on email that was made for this purpose
+	    let transporter = await nodemailer.createTransport({
+	        service: 'gmail',
+	        host: 'smtp.gmail.com',
+	        auth: {
+	            user: 'onthmovereset@gmail.com',
+	            pass: 'OnThMove1994'
+	        },
+	    })
+	    // sets up email info based on parameters
+	    let info = await transporter.sendMail({
+	        from: receiverEmail,
+	        to: receiverEmail,
+	        subject: 'OnThMove Password Reset',
+	        text: 'Your password for OnThMove has been reset! Please be sure to log on and update your password to your own custom password. Your temporary password is: ' + password
+	    })
+	    console.log("Message sent: %s", info);
+
+    } catch (err) {
+    	console.log(err);
+    }
+}
+
+const generateRandomNumber = () => {
+	let password = ''
+	for (let i = 0; i < 3; i++) {
+
+		const number = Math.floor(Math.random() * 1000)
+		password += number + 'G'
+	}
+	return password
+}
+
+
+router.post('/reset', async (req, res) => {
+	
+	try {
+		const emailExists = await User.findOne({'email': req.body.emailToSend})
+		
+		if (emailExists) {
+			
+			const password = generateRandomNumber()
+			
+			mailer(req.body.emailToSend, password)
+			const passwordHash = bcrypt.hashSync(password, bcrypt.genSaltSync(10))
+			
+			emailExists.password = passwordHash
+			emailExists.save()
+			
+			res.json({
+		      status: 200,
+		      data: 'Your Password Has Been Reset',
+		      session: req.session
+		    });
+
+
+		} else {
+			req.session.message = 'No user with that email exisits'
+			res.status(400).json({
+				status: 400,
+				data: req.session.message
+			})
+		}
+	} catch (err) {
+		console.log(err);
+		res.status(400).json({
+				status: 400,
+				data: err
+			})
+	}	
 })
 
 
@@ -199,16 +278,40 @@ router.get('/:id', async (req, res, next) => {
 // endpoint: /api/v1/user/{user id}/edit
 router.put('/:id/edit', async(req, res, next) => {
 	try {
-		const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {new: true})
-		res.json({
+		console.log(req.body);
+		// const foundUser = await User.findById(req.params.id)
+		if (req.body.password === '') {
+			console.log('no password entered');
+			const newReqBody = {username: req.body.username, email: req.body.email}
+			const updatedUser = await User.findByIdAndUpdate(req.params.id, newReqBody, {new: true})
+			console.log('this is updated user');
+			console.log(updatedUser);
+			res.json({
 			status: 200,
 			data: updatedUser,
 			session: req.session
 		})
+		} else {
+			const password = req.body.password;
+			// the password has is what we want to put in the database
+
+			const passwordHash = bcrypt.hashSync(password, bcrypt.genSaltSync(10))
+			req.body.password = passwordHash
+			console.log(req.body);
+			const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {new: true})
+			res.json({
+			status: 200,
+			data: updatedUser,
+			session: req.session
+		})
+		}
+		
+		
 
 
 
 	} catch (err) {
+		console.log(err);
 		res.status(400).json({
 			status: 400,
 			error: err
